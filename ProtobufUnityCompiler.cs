@@ -60,10 +60,16 @@ public class ProtobufUnityCompiler : AssetPostprocessor {
         }
     }
 
+    //// Add for GITAI by Kenichi Usami
+    private static string exePath = Application.dataPath + "\\Scripts\\GITAI_protocol_buffers\\bin\\protoc.exe";
+    
     public static string excPath
     {
         get
         {
+            //// Add for GITAI by Kenichi Usami
+            EditorPrefs.SetString(prefProtocExecutable, exePath);
+
             string ret = EditorPrefs.GetString(prefProtocExecutable, "");
             if (ret.StartsWith(".."))
                 return Path.Combine(Application.dataPath, ret);
@@ -72,7 +78,11 @@ public class ProtobufUnityCompiler : AssetPostprocessor {
         }
         set
         {
-            EditorPrefs.SetString(prefProtocExecutable, value);
+            //// Add for GITAI by Kenichi Usami
+            EditorPrefs.SetString(prefProtocExecutable, exePath);
+
+            //// Commentout for GITAI by Kenichi Usami
+            //EditorPrefs.SetString(prefProtocExecutable, value);
         }
     }
 

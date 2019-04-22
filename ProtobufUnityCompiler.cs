@@ -61,7 +61,11 @@ public class ProtobufUnityCompiler : AssetPostprocessor {
     }
 
     //// Add for GITAI by Kenichi Usami
-    private static string exePath = Application.dataPath + "\\Plugins\\protobuf-unity\\bin\\protoc.exe";
+    private static string exePath = Path.Combine({Application.dataPath,
+                                                  "Plugins",
+                                                  "protobuf-unity",
+                                                  "bin",
+                                                  "protoc.exe"})
 
     public static string excPath
     {

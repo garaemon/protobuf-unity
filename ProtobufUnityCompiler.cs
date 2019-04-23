@@ -6,12 +6,20 @@ using UnityEngine;
 using System.IO;
 using System.Diagnostics;
 
+// Run static constructor when UnityEditor is launched.
+[InitializeOnLoad]
 public class ProtobufUnityCompiler : AssetPostprocessor {
 
     public static readonly string prefProtocEnable = "ProtobufUnity_Enable";
     public static readonly string prefProtocExecutable = "ProtobufUnity_ProtocExecutable";
     public static readonly string prefLogError = "ProtobufUnity_LogError";
     public static readonly string prefLogStandard = "ProtobufUnity_LogStandard";
+
+    static ProtobufUnityCompiler()
+    {
+        // Force to convert .proto file to .cs file if .cs files are missed.
+        CompileAllInProject(true);
+    }
 
     public static bool enabled
     {
@@ -132,7 +140,7 @@ public class ProtobufUnityCompiler : AssetPostprocessor {
 
         if (GUILayout.Button(new GUIContent("Force Compilation")))
         {
-            CompileAllInProject();
+            CompileAllInProject(false);
         }
 
         EditorGUI.EndDisabledGroup();
@@ -151,7 +159,7 @@ public class ProtobufUnityCompiler : AssetPostprocessor {
         }
     }
 
-    static string[] IncludePaths 
+    static string[] IncludePaths
     {
         get
         {
@@ -200,7 +208,7 @@ public class ProtobufUnityCompiler : AssetPostprocessor {
         }
     }
 
-    private static void CompileAllInProject()
+    private static void CompileAllInProject(bool ifSourceMissing)
     {
         if (logStandard)
         {
@@ -214,7 +222,7 @@ public class ProtobufUnityCompiler : AssetPostprocessor {
             {
                 UnityEngine.Debug.Log("Protobuf Unity : Compiling " + s);
             }
-            CompileProtobufSystemPath(s, IncludePaths);
+            CompileProtobufSystemPath(s, IncludePaths, ifSourceMissing);
         }
         UnityEngine.Debug.Log(nameof(ProtobufUnityCompiler));
         AssetDatabase.Refresh();
@@ -223,13 +231,23 @@ public class ProtobufUnityCompiler : AssetPostprocessor {
     private static bool CompileProtobufAssetPath(string assetPath, string[] includePaths)
     {
         string protoFileSystemPath = Directory.GetParent(Application.dataPath) + Path.DirectorySeparatorChar.ToString() + assetPath;
-        return CompileProtobufSystemPath(protoFileSystemPath, includePaths);
+        return CompileProtobufSystemPath(protoFileSystemPath, includePaths, false);
     }
 
-    private static bool CompileProtobufSystemPath(string protoFileSystemPath, string[] includePaths)
+    private static bool CompileProtobufSystemPath(string protoFileSystemPath, string[] includePaths, bool ifSourceMissing)
     {
         if (Path.GetExtension(protoFileSystemPath) == ".proto")
         {
+            if (ifSourceMissing) {
+                // If .cs file exists, just return
+                string csharpFilePath = protoFileSystemPath.Replace(".proto", ".cs");
+                if (File.Exists(csharpFilePath)) {
+                    UnityEngine.Debug.Log("Target cs file exists, skip converting: " + csharpFilePath);
+                    return true;
+                } else {
+                    UnityEngine.Debug.Log("Target cs file does not exist, converting: " + csharpFilePath);
+                }
+            }
             string outputPath = Path.GetDirectoryName(protoFileSystemPath);
 
             string options = " --csharp_out \"{0}\" ";
